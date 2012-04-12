@@ -9,7 +9,7 @@ Requirements
 
 These scripts use the excellent TweetStream and Requests libraries:
 
-pip install tweetstream requests
+    pip install tweetstream requests
 
 If you want a graph rather than reading raw output, you need
 matplotlib as well.
