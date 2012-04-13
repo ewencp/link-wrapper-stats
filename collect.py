@@ -27,7 +27,7 @@ while True:
                         out_fp.flush()
                         os.fsync(out_fp.fileno())
                         current = datetime.datetime.now()
-                        print "Recorded %d tweets in %d seconds (%f tweets/s)" % (count, (current-started).total_seconds(), float(count)/(current-started).total_seconds())
+                        print "Recorded %d tweets in %s (%f tweets/s)" % (count, str(current-started), float(count)/(current-started).seconds)
     except tweetstream.ConnectionError, e:
         print "Disconnected from twitter. Reason:", e.reason
 

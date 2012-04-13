@@ -3,15 +3,15 @@
 import json, requests, re
 import threading, Queue
 
-def count_redirects(url):
+def follow_redirects(url):
     # Do some extra cleanup that the regex doesn't currently catch
     url = url.rstrip('"):')
     try:
         _r = requests.get(url, timeout=5)
-        #if _r.status_code != 200: print url
-        return len( [x for x in _r.history if (x.status_code == 301 or x.status_code == 302)] )
+        # Record entire history: requests history field + final response
+        responses = _r.history + [_r]
+        return [{ 'url' : x.url, 'status' : x.status_code} for x in responses]
     except:
-        #print url
         return None
 
 jobs_queue = Queue.Queue()
@@ -26,11 +26,11 @@ class WorkerThread(threading.Thread):
     def run(self):
         while True:
             url = self.queue.get()
-            nredirects = count_redirects(url)
-            if nredirects is not None:
+            redirects = follow_redirects(url)
+            if redirects is not None:
                 result_lock.acquire()
-                result_list.append(nredirects)
-                if len(result_list) % 100 == 0: print "Processed %d links" % (len(result_list))
+                result_list.append(redirects)
+                if len(result_list) % 100 == 0: print "Processed %d links, %d tweets left" % (len(result_list), self.queue.qsize())
                 result_lock.release()
 
             self.queue.task_done()
@@ -83,5 +83,5 @@ with open('tweets.log', 'rb') as fp:
 
 print "Analyzed %d tweets" % (count)
 print "Found %d URLS" % (url_count)
-for idx in range(20):
-    print "%d => %d" % (idx, len([x for x in result_list if x == idx]) )
+with open('redirects.log', 'w') as fp:
+    json.dump(result_list, fp)
