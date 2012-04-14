@@ -45,7 +45,8 @@ for redirects in links:
 
 print "Analyzed %d links, found %d succesfully loaded" % (len(links), len(redirect_counts))
 
-n, bins, patches = plt.hist(redirect_counts, 8, facecolor='green', align='left', log=True, rwidth=.75)
+bins_ = [x-1 for x in range(10)]
+n, bins, patches = plt.hist(redirect_counts, bins_, facecolor='green', align='left', log=True, rwidth=.75)
 print "Redirections histogram:"
 pprint.pprint(zip(bins, n))
 
@@ -77,7 +78,7 @@ pprint.pprint(top_wrappers)
 
 plt.clf()
 pos = np.arange(len(top_wrappers))+.5
-plt.bar(pos, [x[1] for x in top_wrappers], align='center', log=True)
+plt.bar(pos, [x[1] for x in top_wrappers], facecolor='green', align='center', log=True)
 plt.xticks(pos, [x[0] for x in top_wrappers], rotation=20)
 plt.ylabel('# URLs Shortened')
 plt.title('Top URL Shorteners')
@@ -107,7 +108,7 @@ pprint.pprint(top_rewrappers)
 
 plt.clf()
 pos = np.arange(len(top_rewrappers))+.5
-plt.bar(pos, [x[1] for x in top_rewrappers], align='center', log=True)
+plt.bar(pos, [x[1] for x in top_rewrappers], facecolor='green', align='center', log=True)
 plt.xticks(pos, [x[0] for x in top_rewrappers], rotation=20)
 plt.ylabel('# URLs Re-Shortened')
 plt.title('Top URL Re-Shorteners')
