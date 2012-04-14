@@ -3,16 +3,18 @@
 import json, requests, re
 import threading, Queue
 import csv
-import sys
+import sys, time
 
 def follow_redirects(url):
     # Do some extra cleanup that the regex doesn't currently catch
     url = url.rstrip('"):')
     try:
+        start = time.time()
         _r = requests.get(url, timeout=5)
+        finish = time.time()
         # Record entire history: requests history field + final response
         responses = _r.history + [_r]
-        return [{ 'url' : x.url, 'status' : x.status_code} for x in responses]
+        return ([{ 'url' : x.url, 'status' : x.status_code} for x in responses], (finish-start))
     except:
         return None
 
@@ -78,7 +80,7 @@ with open(filename, 'rb') as fp:
         lines = csv.reader(fp, delimiter='>', quotechar='"')
 
 
-    for line in reader:
+    for line in lines:
         if format == 'json':
             tweet = json.loads(line)
             tweet_text = tweet['text']

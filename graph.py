@@ -37,7 +37,7 @@ def is_shortener_redirect(x):
 
 # Generate histogram of number of redirects per link
 redirect_counts = []
-for redirects in links:
+for redirects in [x[0] for x in links]:
     if redirects[-1]["status"] != 200: continue
 
     nredirects = len( [x for x in redirects if is_shortener_redirect(x)] )
@@ -63,7 +63,7 @@ plt.savefig('redirects_histogram.png')
 # Figure out top wrappers. Just extract domains and count for each
 # redirect found. This is marketshare in some sense.
 wrappers = {}
-for redirects in links:
+for redirects in [x[0] for x in links]:
     if redirects[-1]["status"] != 200: continue
     # Get just the shortener redirects
     shortener_redirects = [x for x in redirects if is_shortener_redirect(x)]
@@ -93,7 +93,7 @@ plt.savefig('top_shorteners.png')
 # per-domain. Unlike the raw count, this indicates who is adding more
 # layers of fragility and more latency to links.
 rewrappers = {}
-for redirects in links:
+for redirects in [x[0] for x in links]:
     if redirects[-1]["status"] != 200: continue
     # Get just the shortener redirects
     shortener_redirects = [x for x in redirects if is_shortener_redirect(x)]
@@ -115,3 +115,20 @@ plt.title('Top URL Re-Shorteners')
 plt.grid(True)
 plt.savefig('top_reshorteners.png')
 #plt.show()
+
+
+# Figure out link load latency
+latencies = []
+for redirects in links:
+    # Some filtering first.
+    # Only use successful links:
+    if redirects[0][-1]["status"] != 200: continue
+    # We hold onto non-shortened links instead of filtering here. This
+    # gives the latency of successful links displayed on Twitter,
+    # i.e. what a user actually sees. It isn't adjusted in anyway,
+    # e.g. to focus on only links going through shorteners. Hopefully
+    # this indicates how users actually perceive the experience
+
+    latencies.append(redirects[1])
+latency = sum(latencies) / float(len(latencies))
+print "URL load latency:", latency, "seconds"
