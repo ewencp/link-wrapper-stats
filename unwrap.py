@@ -2,6 +2,8 @@
 
 import json, requests, re
 import threading, Queue
+import csv
+import sys
 
 def follow_redirects(url):
     # Do some extra cleanup that the regex doesn't currently catch
@@ -46,7 +48,22 @@ def normalize_url(url):
 
     return url
 
-with open('tweets.log', 'rb') as fp:
+
+# Support two formats -- a JSON dump from the streaming API, by default...
+format = 'json'
+filename = 'tweets.log'
+link_limit = None
+# or CSV dump. This expects a weird format -- 'comma' separated is '>'
+# separated because this causes fewer problems with Python's csv
+# module. Fields are quoted by '"' and the tweet text is in index 2.
+if 'csv' in sys.argv:
+    format = 'csv'
+    filename = 'tweets.csv'
+if 'limit' in sys.argv:
+    link_limit = 105000
+
+broken = 0
+with open(filename, 'rb') as fp:
     count = 0
     url_count = 0
 
@@ -55,10 +72,21 @@ with open('tweets.log', 'rb') as fp:
         t.daemon = True
         t.start()
 
-    for line in fp:
-        tweet = json.loads(line)
+    if format == 'json':
+        lines = fp
+    elif format == 'csv':
+        lines = csv.reader(fp, delimiter='>', quotechar='"')
 
-        tweet_text = tweet['text']
+
+    for line in reader:
+        if format == 'json':
+            tweet = json.loads(line)
+            tweet_text = tweet['text']
+        elif format == 'csv':
+            if not line or len(line) != 10:
+                broken += 1
+                continue
+            tweet_text = line[2]
 
         # (Start of line or word)
         # (Maybe something like http://)
@@ -77,11 +105,12 @@ with open('tweets.log', 'rb') as fp:
             jobs_queue.put(orig_url)
 
         count += 1
+        if link_limit is not None and count == link_limit: break
 
     # wait on the queue until everything has been processed
     jobs_queue.join()
 
-print "Analyzed %d tweets" % (count)
+print "Analyzed %d tweets, skipped %d broken lines" % (count, broken)
 print "Found %d URLS" % (url_count)
 with open('redirects.log', 'w') as fp:
     json.dump(result_list, fp)
